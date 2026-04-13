@@ -16,12 +16,17 @@ async function startApplication() {
   console.log("Loaded!");
   await self.pyodide.loadPackage("micropip");
 
-  // Fetch local Python modules and write them into Pyodide's home directory
-  const localModules = ['spotify_api.py', 'plotting.py', 'genre_grouper.py'];
+  // Fetch local Python modules and inject them directly into sys.modules
+  const localModules = ['genre_grouper', 'spotify_api', 'plotting'];
   for (const mod of localModules) {
-    const response = await fetch(mod);
+    const response = await fetch(mod + '.py');
     const text = await response.text();
-    self.pyodide.FS.writeFile('/home/pyodide/' + mod, text);
+    await self.pyodide.runPythonAsync(`
+import types, sys
+_mod = types.ModuleType('${mod}')
+exec(${JSON.stringify(text)}, _mod.__dict__)
+sys.modules['${mod}'] = _mod
+`);
   }
 
   const env_spec = ['https://cdn.holoviz.org/panel/wheels/bokeh-3.7.3-py3-none-any.whl', 'https://cdn.holoviz.org/panel/1.7.5/dist/wheels/panel-1.7.5-py3-none-any.whl', 'pyodide-http==0.2.1']
