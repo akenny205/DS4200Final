@@ -396,8 +396,7 @@ def main():
                 active=0
             )
         ]
-    ).servable().show()
+    ).servable()
 
 
-if __name__ == "__main__":
-    main()
+main()
